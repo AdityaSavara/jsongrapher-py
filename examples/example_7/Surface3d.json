@@ -1,0 +1,22 @@
+{
+    "data": [
+        {
+            "type": "surface",
+            "z": [
+                [10, 20, 30, 40],
+                [20, 30, 40, 50],
+                [30, 40, 50, 60],
+                [40, 50, 60, 70]
+            ],
+            "colorscale": "Viridis"
+        }
+    ],
+    "layout": {
+        "title": "Example 3D Surface Plot",
+        "scene": {
+            "xaxis": {"title": "X Axis"},
+            "yaxis": {"title": "Y Axis"},
+            "zaxis": {"title": "Z Axis"}
+        }
+    }
+}

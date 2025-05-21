@@ -1,0 +1,24 @@
+{
+    "data": [
+        {
+            "type": "scatter3d",
+            "x": [1, 2, 3, 4],
+            "y": [10, 20, 30, 40],
+            "z": [100, 200, 300, 400],
+            "mode": "markers",
+            "marker": {
+                "size": 8,
+                "color": "blue",
+                "opacity": 0.8
+            }
+        }
+    ],
+    "layout": {
+        "title": "Example 3D Scatter Plot",
+        "scene": {
+            "xaxis": {"title": "X Axis"},
+            "yaxis": {"title": "Y Axis"},
+            "zaxis": {"title": "Z Axis"}
+        }
+    }
+}
