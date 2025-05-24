@@ -713,7 +713,7 @@ class JSONGrapherRecord:
     def scale_record(self, num_to_scale_x_values_by = 1, num_to_scale_y_values_by = 1):
         self.fig_dict = scale_fig_dict_values(self.fig_dict, num_to_scale_x_values_by=num_to_scale_x_values_by, num_to_scale_y_values_by=num_to_scale_y_values_by)
 
-    def set_layout(self, comments="", graph_title="", x_axis_label_including_units="", y_axis_label_including_units="", x_axis_comments="",y_axis_comments="", remove_plural_units=True):
+    def set_layout_fields(self, comments="", graph_title="", x_axis_label_including_units="", y_axis_label_including_units="", x_axis_comments="",y_axis_comments="", remove_plural_units=True):
         # comments: General comments about the layout. Allowed by JSONGrapher, but will be removed if converted to a plotly object.
         # graph_title: Title of the graph.
         # xaxis_title: Title of the x-axis, including units.
@@ -773,7 +773,7 @@ class JSONGrapherRecord:
                 json.dump(self.fig_dict, f, indent=4)
         return self.fig_dict
 
-    #simulate all series will simulate any series as needed.
+    ## Start of class functions related to getting actual graph objects and making plot images ##
     def get_plotly_fig(self, plot_style = {"layout_style":"", "trace_styles_collection":""}, update_and_validate=True, simulate_all_series = True, evaluate_all_equations = True, adjust_implicit_data_ranges=True):
         """
         Generates a Plotly figure from the stored fig_dict, performing simulations and equations as needed.
@@ -781,7 +781,7 @@ class JSONGrapherRecord:
 
         Args:
             plot_style: String or dictionary of style to apply. Use '' to skip applying a style, or provide a list of length two containing both a layout style and a data series style."none" removes all style.
-            simulate_all_series (bool): If True, performs simulations for applicable series.
+            simulate_all_series (bool): If True, performs simulations for all applicable series.
             update_and_validate (bool): If True, applies automatic corrections to fig_dict.
             evaluate_all_equations (bool): If True, evaluates all equation-based series.
             adjust_implicit_data_ranges (bool): If True, modifies ranges for implicit data series.
@@ -911,6 +911,8 @@ class JSONGrapherRecord:
         fig.savefig(filename)
         plt.close(fig) #remove fig from memory.
 
+    ## End of class functions related to getting actual graph objects and making plot images ##
+
     def add_hints(self):
         """
         Adds hints to fields that are currently empty strings using self.hints_dictionary.
@@ -971,19 +973,59 @@ class JSONGrapherRecord:
                     if current_field.get(current_path_key, "") == hint_text:
                         current_field[current_path_key] = ""
 
+    ## Start of class functions related to styles and formatting ##
+
     #Make some pointers to external functions, for convenience, so people can use syntax like record.function_name() if desired.
     # def apply_layout_style(self, layout_style_to_apply=''):
     #     self.fig_dict = apply_layout_style_to_plotly_dict(self.fig_dict, layout_style_to_apply=layout_style_to_apply)
-    def apply_plot_style(self, plot_style= {"layout_style":"", "trace_styles_collection":""}): 
-        #the plot_style can be a string, or a plot_style dictionary {"layout_style":"default", "trace_styles_collection":"default"} or a list of length two with those two items.
-        #The plot_style dictionary can include a pair of dictionaries.
-        #if apply style is called directly, we will first put the plot_style into the plot_style field
-        #This way, the style will stay.
-        self.fig_dict['plot_style'] = plot_style
-        self.fig_dict = apply_plot_style_to_plotly_dict(self.fig_dict, plot_style=plot_style)
-    def remove_plot_style(self):
-        self.fig_dict.pop("plot_style") #This line removes the field of plot_style from the fig_dict.
-        self.fig_dict = remove_plot_style_from_plotly_dict(self.fig_dict) #This line removes the actual formatting from the fig_dict.
+    def set_layout_style(self, layout_style):
+        #layout_style should be a dictionary or a string
+        plot_style = self.fig_dict.get('plot_style',{})
+        plot_style["layout_style"] = layout_style
+        self.fig_dict["plot_style"] = plot_style
+        return plot_style
+    def remove_current_layout_style_setting(self):
+        plot_style = self.fig_dict.get('plot_style',{})
+        if "layout_style" in plot_style:
+            plot_style.pop("layout_style")
+        self.fig_dict["plot_style"] = plot_style
+        return plot_style
+    def set_trace_styles_collection(self, trace_styles_collection):
+        #trace_styles_collection should be a dictionary or a string
+        plot_style = self.fig_dict.get('plot_style',{})
+        plot_style["trace_styles_collection"] = trace_styles_collection
+        self.fig_dict["plot_style"] = plot_style
+        return plot_style
+    def remove_current_trace_styles_collection_setting(self):
+        plot_style = self.fig_dict.get('plot_style',{})
+        if "trace_styles_collection" in plot_style:
+            plot_style.pop("trace_styles_collection")
+        #adding in commmon misspelling cases.
+        if "traces_style_collection" in plot_style:
+            plot_style.pop("traces_style_collection")
+        self.fig_dict["plot_style"] = plot_style
+        return plot_style
+    def set_trace_style_indvidiual_data_series(self, data_series_index, trace_style):
+        #data_series_index should be an integer. trace_style should be a string.
+        self.fig_dict["data"][data_series_index]["trace_style"] = trace_style
+        return self.fig_dict["data"][data_series_index]
+    def remove_current_trace_style_setting_indvidiual_data_series(self, data_series_index, trace_style):
+        #data_series_index should be an integer. trace_style should be a string.
+        if "trace_style" in self.fig_dict["data"][data_series_index]
+            self.fig_dict["data"][data_series_index].pop("trace_style")
+        return self.fig_dict["data"][data_series_index]
+    # def apply_plot_style(self, plot_style= {"layout_style":"", "trace_styles_collection":""}): 
+    #     #the plot_style can be a string, or a plot_style dictionary {"layout_style":"default", "trace_styles_collection":"default"} or a list of length two with those two items.
+    #     #The plot_style dictionary can include a pair of dictionaries.
+    #     #if apply style is called directly, we will first put the plot_style into the plot_style field
+    #     #This way, the style will stay.
+    #     self.fig_dict['plot_style'] = plot_style
+    #     self.fig_dict = apply_plot_style_to_plotly_dict(self.fig_dict, plot_style=plot_style)
+    # def remove_plot_style(self):
+    #     self.fig_dict.pop("plot_style") #This line removes the field of plot_style from the fig_dict.
+    #     self.fig_dict = remove_plot_style_from_plotly_dict(self.fig_dict) #This line removes the actual formatting from the fig_dict.
+    # def remove_current_plot_style_setting(self):
+    #     self.fig_dict.pop("plot_style") #This line removes the field of plot_style from the fig_dict.
     def extract_layout_style(self):
         layout_style = extract_layout_style_from_plotly_dict(self.fig_dict)
         return layout_style
@@ -1039,6 +1081,9 @@ class JSONGrapherRecord:
             filename = new_trace_style_name
         export_trace_style(trace_style_dict=extracted_trace_style[new_trace_style_name],trace_style_name=new_trace_style_name, filename=filename)
         return extracted_trace_style       
+    
+    ## End of class functions related to styles and formatting ##
+    
     def validate_JSONGrapher_record(self):
         validate_JSONGrapher_record(self)
     def update_and_validate_JSONGrapher_record(self):
