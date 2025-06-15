@@ -2338,7 +2338,7 @@ def prepare_bubble_sizes(data_series):
     if "max_bubble_size" in data_series:
         max_bubble_size = data_series["max_bubble_size"]
     else:
-        max_bubble_size = 10       
+        max_bubble_size = 100       
     scaled_sizes = normalized_sizes*max_bubble_size
     data_series["marker"]["size"] = scaled_sizes.tolist() #from numpy array back to list.
     
