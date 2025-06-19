@@ -1497,15 +1497,22 @@ class JSONGrapherRecord:
 # label string will be the full label including units. Axis_name is typically "x" or "y"
 def validate_JSONGrapher_axis_label(label_string, axis_name="", remove_plural_units=True):
     """
-    Validates the axis label provided to JSONGrapher.
+    Validates a JSONGrapher axis label for structure, units, and formatting.
+
+    The function checks for empty labels, missing units, unbalanced parentheses, and plural unit forms.
+    For example, given the label "Mass (kilograms)", it will warn about plural units and optionally
+    change it to "Mass (kilogram)" if `remove_plural_units=True`.
 
     Args:
-        label_string (str): The axis label containing a numeric value and units.
-        axis_name (str): The name of the axis being validated (e.g., 'x' or 'y').
-        remove_plural_units (boolean) : Instructions wil to remove plural units or not. Will remove them in the returned stringif set to True, or will simply provide a warning if set to False.
+        label_string (str): The axis label containing descriptive text and a unit string in parentheses.
+        axis_name (str, optional): Name of the axis, such as 'x' or 'y'. Used in warnings.
+        remove_plural_units (bool, optional): If True, plural units are rewritten as singular. Defaults to True.
 
     Returns:
-        None: Prints warnings if any validation issues are found.
+        tuple:
+            bool: Whether the label passed all validation checks.
+            list[str]: Warnings describing any issues found.
+            str: The potentially corrected label string.
     """
     warnings_list = []
     #First check if the label is empty.
@@ -1541,14 +1548,18 @@ def validate_JSONGrapher_axis_label(label_string, axis_name="", remove_plural_un
     
 def units_plural_removal(units_to_check):
     """
-    Parses a units string to remove "s" if the string is found as an exact match without an s in the units lists.
+    Attempts to convert plural unit names to singular by removing a trailing "s" if appropriate.
+
+    For example, if "years" is not recognized but "year" is in the unit list, the function returns `"year"`
+    with a flag indicating the change. If the singular form still isn't valid, the unit remains unchanged.
+
     Args:
-        units_to_check (str): A string containing units to check.
+        units_to_check (str): A unit string to check for pluralization.
 
     Returns:
-        tuple: A tuple of two values
-              - "changed" (Boolean): True, or False, where True means the string was changed to remove an "s" at the end.
-              - "singularized" (string): The units parsed to be singular, if needed.
+        tuple:
+            bool: True if the unit was changed to singular, False otherwise.
+            str: The singularized unit (or the original if unchanged).
     """
     # Check if we have the module we need. If not, return with no change.
     try:
@@ -1584,6 +1595,21 @@ def units_plural_removal(units_to_check):
 
 
 def separate_label_text_from_units(label_with_units):
+    """
+    Separates descriptive label text from a parenthesized unit string.
+
+    For example, the input `"Mass (kg)"` returns `{"text": "Mass", "units": "kg"}`. If the parentheses
+    are mismatched or ambiguous, it raises an error or captures everything from the first "(" onward
+    as the unit component.
+
+    Args:
+        label_with_units (str): A string containing axis label text and units.
+
+    Returns:
+        dict: A dictionary with two keys:
+            - "text" (str): The portion before the units.
+            - "units" (str): The content within the outermost parentheses.
+    """
     # Check for mismatched parentheses
     open_parentheses = label_with_units.count('(')
     close_parentheses = label_with_units.count(')')
@@ -1624,16 +1650,18 @@ def separate_label_text_from_units(label_with_units):
 
 def validate_plotly_data_list(data):
     """
-    Validates the entries in a Plotly data array.
-    If a dictionary is received, the function will assume you are sending in a single dataseries for validation
-    and will put it in a list of one before the validation.
+    Validates a Plotly-style data list or single trace for required structure and fields.
+
+    Supports `"scatter"`, `"bar"`, `"pie"`, and `"heatmap"` types. If a single dictionary is passed,
+    it's wrapped in a list automatically. For example, a scatter trace must include both `"x"` and `"y"` keys.
 
     Args:
-        data (list): A list of dictionaries, each representing a Plotly trace.
+        data (list | dict): A list of trace dictionaries or a single trace dictionary.
 
     Returns:
-        bool: True if all entries are valid, False otherwise.
-        list: A list of errors describing why the validation failed.
+        tuple:
+            bool: True if all traces pass validation, False otherwise.
+            list[str]: A list of warnings explaining any validation issues.
     """
     #check if a dictionary was received. If so, will assume that
     #a single series has been sent, and will put it in a list by itself.
@@ -1688,18 +1716,18 @@ def validate_plotly_data_list(data):
 
 def parse_units(value):
     """
-    Parses a numerical value and its associated units from a string. This meant for scientific constants and parameters
-    Such as rate constants, gravitational constant, or simiilar.
-    This function is not meant for separating the axis label from its units. For that, use  separate_label_text_from_units
+    Parses a numeric value and its unit from a scientific-style input string.
+
+    For example, the input `"6.67e-11 (m^3/kg/s^2)"` returns  
+    `{"value": 6.67e-11, "units": "m^3/kg/s^2"}`. If no parentheses are present, the input is treated as unitless.
 
     Args:
-        value (str): A string containing a numeric value and optional units enclosed in parentheses.
-                     Example: "42 (kg)" or "100".
+        value (str): A string containing a numeric value, optionally followed by units in parentheses.
 
     Returns:
-        dict: A dictionary with two keys:
-              - "value" (float): The numeric value parsed from the input string.
-              - "units" (str): The units parsed from the input string, or an empty string if no units are present.
+        dict: A dictionary with:
+            - "value" (float): The extracted number.
+            - "units" (str): The extracted units, or an empty string if none are present.
     """
     # Find the position of the first '(' and the last ')'
     start = value.find('(')
@@ -1723,6 +1751,19 @@ def parse_units(value):
 #This function does updating of internal things before validating
 #This is used before printing and returning the JSON record.
 def update_and_validate_JSONGrapher_record(record, clean_for_plotly=True):
+    """
+    Performs updates and final validation on a JSONGrapher record before export.
+
+    This function is typically called just before returning or printing the record. If `clean_for_plotly`
+    is True, the figure dictionary is sanitized to remove any fields incompatible with Plotly.
+
+    Args:
+        record (Record): A JSONGrapher Record object to be validated and optionally cleaned.
+        clean_for_plotly (bool, optional): Whether to clean the figure dictionary for Plotly use. Defaults to True.
+
+    Returns:
+        Record: The updated and validated JSONGrapher record object.
+    """
     record.validate_JSONGrapher_record()
     if clean_for_plotly == True:
         record.fig_dict = clean_json_fig_dict(record.fig_dict)
@@ -1731,14 +1772,19 @@ def update_and_validate_JSONGrapher_record(record, clean_for_plotly=True):
 #TODO: add the ability for this function to check against the schema.
 def validate_JSONGrapher_record(record):
     """
-    Validates a JSONGrapher record to ensure all required fields are present and correctly structured.
+    Validates a JSONGrapher record for required fields, structure, and value types.
+
+    Checks for presence and formatting of keys like `"comments"`, `"datatype"`, `"data"`, and `"layout"`.
+    Also ensures that nested fields such as `layout.title.text` and `layout.xaxis.title.text` are present
+    and correctly typed. This function is typically run before exporting or serializing a record.
 
     Args:
         record (dict): The JSONGrapher record to validate.
 
     Returns:
-        bool: True if the record is valid, False otherwise.
-        list: A list of errors describing any validation issues.
+        tuple:
+            bool: True if the record passes validation, False otherwise.
+            list[str]: A list of warnings describing missing or invalid elements.
     """
     warnings_list = []
 
