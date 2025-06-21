@@ -177,6 +177,21 @@ def convert_JSONGRapherRecord_data_list_to_class_objects(record):
 #Could add "tag_characters"='<>' as an optional argument to this and other functions
 #to make the option of other characters for custom units.
 def get_units_scaling_ratio(units_string_1, units_string_2):
+    """
+    Computes the numeric scaling ratio between two unit strings.
+
+    For example, converting `"cm"` to `"m"` returns `0.01`, and `"ms"` to `"s"` returns `0.001`.
+    This uses the units-handling package (likely `unitpy`) under the hood.
+
+    Args:
+        original_units (str): The starting units (e.g., "cm").
+        target_units (str): The desired units to convert to (e.g., "m").
+
+    Returns:
+        float: A scaling factor such that `value * factor = value_in_target_units`.
+    """
+
+    
     # Ensure both strings are properly encoded in UTF-8
     units_string_1 = units_string_1.encode("utf-8").decode("utf-8")
     units_string_2 = units_string_2.encode("utf-8").decode("utf-8")
@@ -227,6 +242,19 @@ def get_units_scaling_ratio(units_string_1, units_string_2):
     return ratio_only #function returns ratio only. If function is later changed to return more, then units_strings may need further replacements.
 
 def return_custom_units_markup(units_string, custom_units_list):
+    """
+    Returns LaTeX-style markup or Unicode equivalents for known custom unit names.
+
+    For example, `"uF"` may return `"μF"` and `"ohm"` may return `"Ω"`. This allows users
+    to display prettier units in plots or reports using readable formatting.
+
+    Args:
+        target_units (str): A unit string such as "uF", "kohm", or "ohm".
+
+    Returns:
+        str: A formatted unit string for display (e.g., "μF").
+    """
+
     """puts markup around custom units with '<' and '>' """
     sorted_custom_units_list = sorted(custom_units_list, key=len, reverse=True)
     #the units should be sorted from longest to shortest if not already sorted that way.
@@ -238,6 +266,19 @@ def return_custom_units_markup(units_string, custom_units_list):
     #However, because unitpy gives unexpected behavior with the microsymbol,
     #We are actually going to change them from "µm" to "<microfrogm>"
 def tag_micro_units(units_string):
+    """
+    Replaces occurrences of micro-style characters with a custom tag.
+
+    Converts `"μF"` to `"uF"` and `"μs"` to `"us"` for standardization in internal logic
+    or file-safe output. This function assumes micro symbols appear in front of common SI units.
+
+    Args:
+        unit_string (str): A unit string that may contain the micro symbol "μ".
+
+    Returns:
+        str: The updated unit string with "μ" replaced by "u".
+    """
+
     # Unicode representations of micro symbols:
     # U+00B5 → µ (Micro Sign)
     # U+03BC → μ (Greek Small Letter Mu)
@@ -260,6 +301,19 @@ def tag_micro_units(units_string):
 
     #We are actually going to change them back to "µm" from "<microfrogm>"
 def untag_micro_units(units_string):
+    """
+    Converts micro-unit tags back to the Greek micro symbol.
+
+    Replaces occurrences of "u" with "μ" for standard display — for example, "uF" becomes "μF".
+    This is the reverse operation of `tag_micro_units`.
+
+    Args:
+        unit_string (str): A unit string that uses "u" to indicate micro.
+
+    Returns:
+        str: The unit string with micro replaced by the "μ" symbol.
+    """
+
     if "<microfrog" not in units_string:  # Check if any frogified unit exists
         return units_string
     import re
@@ -269,6 +323,19 @@ def untag_micro_units(units_string):
     return re.sub(pattern, r"µ\1", units_string)
 
 def add_custom_unit_to_unitpy(unit_string):
+    """
+    Adds a custom unit and its scaling factor to the unitpy library or unit-handling dictionary.
+
+    For example, adding `"min"` with `60` maps it to 60 seconds, allowing future conversions.
+
+    Args:
+        unit_string (str): The name of the custom unit (e.g., "min").
+        scaling_value (float): The scaling factor relative to the base unit.
+
+    Returns:
+        None
+    """
+
     import unitpy
     from unitpy.definitions.entry import Entry
     #need to put an entry into "bases" because the BaseSet class will pull from that dictionary.
@@ -287,8 +354,19 @@ def add_custom_unit_to_unitpy(unit_string):
         unitpy.ledger.add_unit(new_entry) #implied return is here. No return needed.
 
 def extract_tagged_strings(text):
-    """Extracts tags surrounded by <> from a given string. Used for custom units.
-       returns them as a list sorted from longest to shortest"""
+    """
+    Extracts all substrings from a block of text that are wrapped in the specified delimiter.
+
+    For example, with `tag_delimiter="%%"`, the input `"This is %%tagged%% text"` will extract `"tagged"`.
+
+    Args:
+        text (str): The full input string with potential tagged segments.
+        tag_delimiter (str, optional): The delimiter used to identify tags. Default is "%%".
+
+    Returns:
+        list[str]: A list of all extracted strings between matching tag delimiters.
+    """
+
     import re
     list_of_tags = re.findall(r'<(.*?)>', text)
     set_of_tags = set(list_of_tags)
@@ -299,6 +377,23 @@ def extract_tagged_strings(text):
 #It was written by copilot and refined by further prompting of copilot by testing.
 #The depth is because the function works iteratively and then stops when finished.
 def convert_inverse_units(expression, depth=100):
+    """
+    Converts inverse-style units expressed as division into a readable multiplication form.
+
+    For example:
+        - "1/s" becomes "Hz"
+        - "1 / cm" becomes "cm⁻¹"
+        - "1/cm²" becomes "cm⁻²"
+
+    It supports common SI inverses and produces more natural units for display or scaling logic.
+
+    Args:
+        unit_string (str): A string representation of an inverse unit.
+
+    Returns:
+        str: A cleaned, human-readable form of the inverse unit.
+    """
+
     import re
     # Patterns to match valid reciprocals while ignoring multiplied units, so (1/bar)*bar should be  handled correctly.
     patterns = [r"1/\((1/.*?)\)", r"1/([a-zA-Z]+)"]
@@ -316,6 +411,21 @@ def convert_inverse_units(expression, depth=100):
 #the below function takes in a fig_dict, as well as x and/or y scaling values.
 #The function then scales the values in the data of the fig_dict and returns the scaled fig_dict.
 def scale_fig_dict_values(fig_dict, num_to_scale_x_values_by = 1, num_to_scale_y_values_by = 1):
+    """
+    Recursively scales values inside a Plotly-style figure dictionary.
+
+    It applies a multiplicative factor to a specified field (e.g., "x", "y", or "z")
+    across all data traces. Useful when converting between units like "cm" to "m".
+
+    Args:
+        fig_dict (dict): A dictionary structured like a Plotly figure.
+        field (str): The field name to scale (typically "x", "y", or "z").
+        scaling_ratio (float): The value to multiply each numeric element by.
+
+    Returns:
+        dict: The updated figure dictionary with scaled values.
+    """
+
     import copy
     scaled_fig_dict = copy.deepcopy(fig_dict)
     #iterate across the data objects inside, and change them.
@@ -326,6 +436,21 @@ def scale_fig_dict_values(fig_dict, num_to_scale_x_values_by = 1, num_to_scale_y
 
 
 def scale_dataseries_dict(dataseries_dict, num_to_scale_x_values_by = 1, num_to_scale_y_values_by = 1, num_to_scale_z_values_by = 1):
+    """
+    Applies scaling to a specific field in a single Plotly-style data trace.
+
+    For example, this can be used to convert `"x": [0, 1, 2]` in centimeters
+    into `"x": [0, 0.01, 0.02]` in meters by applying a scaling ratio of 0.01.
+
+    Args:
+        data_series (dict): A dictionary representing a Plotly trace (a single data series).
+        field (str): The field name to scale ("x", "y", or "z").
+        scaling_ratio (float): The multiplier to apply to the values in the field.
+
+    Returns:
+        dict: The scaled data_series dictionary.
+    """
+
     import numpy as np
     dataseries = dataseries_dict
     dataseries["x"] = list(np.array(dataseries["x"], dtype=float)*num_to_scale_x_values_by) #convert to numpy array for multiplication, then back to list.
