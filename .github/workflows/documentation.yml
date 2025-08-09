@@ -3,7 +3,7 @@ name: documentation
 on: [push, pull_request, workflow_dispatch]
 
 Permissions:
-contents: write
+    contents: write
 
 jobs:
 docs:
