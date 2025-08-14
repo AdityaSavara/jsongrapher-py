@@ -1,0 +1,85 @@
+JSONGrapher package
+===================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   JSONGrapher.styles
+
+Submodules
+----------
+
+JSONGrapher.JSONRecordCreator module
+------------------------------------
+
+.. automodule:: JSONGrapher.JSONRecordCreator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.UnitPytesting module
+--------------------------------
+
+.. automodule:: JSONGrapher.UnitPytesting
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.UnitpyCustomUnitsTesting module
+-------------------------------------------
+
+.. automodule:: JSONGrapher.UnitpyCustomUnitsTesting
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.drag\_and\_drop\_gui module
+---------------------------------------
+
+.. automodule:: JSONGrapher.drag_and_drop_gui
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.equation\_creator module
+------------------------------------
+
+.. automodule:: JSONGrapher.equation_creator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.equation\_evaluator module
+--------------------------------------
+
+.. automodule:: JSONGrapher.equation_evaluator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.units\_list module
+------------------------------
+
+.. automodule:: JSONGrapher.units_list
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.version module
+--------------------------
+
+.. automodule:: JSONGrapher.version
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: JSONGrapher
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,29 @@
+JSONGrapher.styles package
+==========================
+
+Submodules
+----------
+
+JSONGrapher.styles.layout\_styles\_library module
+-------------------------------------------------
+
+.. automodule:: JSONGrapher.styles.layout_styles_library
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+JSONGrapher.styles.trace\_styles\_collection\_library module
+------------------------------------------------------------
+
+.. automodule:: JSONGrapher.styles.trace_styles_collection_library
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: JSONGrapher.styles
+   :members:
+   :show-inheritance:
+   :undoc-members:
